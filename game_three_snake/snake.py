@@ -95,19 +95,49 @@ while running:
             if event.key == pygame.K_DOWN and snake_dy != -SNAKE_SIZE:
                 snake_dx = 0
                 snake_dy = SNAKE_SIZE
+
+    # Add the Head Coordinate to the First Coordinate of the Body Coordinate List
+    body_coords.insert(0, head_coord)
+    body_coords.pop()
     
     # Update the x and y Position of the Snakes Head and Make a New Coordinate
     head_x += snake_dx
     head_y += snake_dy
     head_coord = (head_x, head_y, SNAKE_SIZE, SNAKE_SIZE)
+
+    # Check for Game Over
+    if head_rect.left < 0 or head_rect.right > WINDOW_WIDTH or head_rect.top < 0 or head_rect.bottom > WINDOW_HEIGHT or head_coord in body_coords:
+        display_surface.blit(game_over_text, game_over_rect)
+        display_surface.blit(continue_text, continue_rect)
+        pygame.display.update()
+
+        # Pause the Game until the Player Presses any Key
+        paused = True
+        while paused:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    score = 0
+                    head_x = WINDOW_WIDTH // 2
+                    head_y = WINDOW_HEIGHT // 2 + 100
+                    head_coord = (head_x, head_y, SNAKE_SIZE, SNAKE_SIZE)
+                    body_coords = []
+                    snake_dx = 0
+                    snake_dy = 0
+                    paused = False
+                if event.type == pygame.QUIT:
+                    running = False
+                    paused = False
     
     # Check for Collisions
     if head_rect.colliderect(apple_rect):
         score += 1
         crunch.play()
+
         apple_x = random.randint(0, WINDOW_WIDTH - SNAKE_SIZE)
         apple_y = random.randint(0, WINDOW_HEIGHT - SNAKE_SIZE)
         apple_coord = (apple_x, apple_y, SNAKE_SIZE, SNAKE_SIZE)
+
+        body_coords.append(head_coord)
     
     # Update HUD
     score_text = font.render("Score: " + str(score), True, GREEN, DARKRED)
@@ -120,9 +150,10 @@ while running:
     display_surface.blit(score_text, score_rect)
 
     # Blit Assets
-    # Still need to do the Body
     head_rect = pygame.draw.rect(display_surface, GREEN, head_coord)
     apple_rect = pygame.draw.rect(display_surface, RED, apple_coord)
+    for body_piece in body_coords:
+        pygame.draw.rect(display_surface, DARKGREEN, body_piece)
 
     # Update the Display and Tick the Clock
     pygame.display.update()
